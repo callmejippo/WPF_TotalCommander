@@ -5,6 +5,10 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Drawing;
+using System.Windows.Interop;
+using System.Windows.Media.Imaging;
+using System.Windows.Media;
+
 
 namespace Ass01_21127661
 {
@@ -106,7 +110,7 @@ namespace Ass01_21127661
         }
 
         public static Icon GetLargeIcon(string fileName)
-        {
+        {   
             return GetIcon(fileName, SHGFI.LargeIcon);
         }
 
@@ -130,5 +134,7 @@ namespace Ass01_21127661
             Win32.DestroyIcon(shinfo.hIcon);
             return icon;
         }
+        
+
     }
 }

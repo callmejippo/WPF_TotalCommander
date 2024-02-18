@@ -26,22 +26,21 @@
         </Style>
 
         <Style TargetType="StackPanel" x:Key="addressRow">
-            <Setter Property="Height" Value="30"></Setter>
+            <Setter Property="Height" Value="25"></Setter>
             <Setter Property="Margin" Value="3"></Setter>
             <Setter Property="Orientation" Value="Horizontal"></Setter>
             <Setter Property="DockPanel.Dock" Value="Top"></Setter>
         </Style>
         <Style TargetType="ComboBox">
-            <Setter Property="Height" Value="22"></Setter>
+            <Setter Property="Height" Value="25"></Setter>
             <Setter Property="Width" Value="100"></Setter>
             <Setter Property="VerticalContentAlignment" Value="Center"></Setter>
             <Setter Property="VerticalAlignment" Value="Center"></Setter>
-            <Setter Property="Margin" Value="10,0,0,0"></Setter>
         </Style>
         <Style TargetType="TextBlock" x:Key="pathInfo">
             <Setter Property="VerticalAlignment" Value="Center"></Setter>
-            <Setter Property="Padding" Value="10"></Setter>
-            <Setter Property="FontWeight" Value="Bold"></Setter>
+            <Setter Property="Padding" Value="5"></Setter>
+            <Setter Property="FontWeight" Value="DemiBold"></Setter>
         </Style>
 
     </Window.Resources>
@@ -64,19 +63,19 @@
         </Menu>
 
         <StackPanel Grid.Row="1" Grid.ColumnSpan="4" Orientation="Horizontal">
-            <Button Width="50">
+            <Button Width="50" Click="BackButton_Click" x:Name="backBtn">
                 <StackPanel Orientation="Vertical" VerticalAlignment="Center">
                     <Image Source="images/left-arrows.png" Style="{StaticResource btnIcon}"/>
                     <TextBlock Style="{StaticResource btnContent}">Back</TextBlock>
                 </StackPanel>
             </Button>
-            <Button Width="50" >
+            <Button Width="50" Click="NextButton_Click" x:Name="nextBtn">
                 <StackPanel Orientation="Vertical" VerticalAlignment="Center">
                     <Image Source="images/next.png" Style="{StaticResource btnIcon}"/>
                     <TextBlock Style="{StaticResource btnContent}">Next</TextBlock>
                 </StackPanel>
             </Button>
-            <Button >
+            <Button Click="UpButton_Click">
                 <StackPanel Orientation="Vertical" VerticalAlignment="Center">
                     <Image Source="images/document.png" Style="{StaticResource btnIcon}"/>
                     <TextBlock Style="{StaticResource btnContent}">Up</TextBlock>
@@ -106,17 +105,67 @@
         <GridSplitter Grid.Row="2" Grid.Column="1" Width="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
 
 
-        <DockPanel Grid.Column="0" Grid.Row="2" LastChildFill="True">
+        <DockPanel x:Name="dockPanel1" Grid.Column="0" Grid.Row="2" LastChildFill="True"  GotFocus="DockPanel_GotFocus" LostFocus="DockPanel_LostFocus">
             <StackPanel Style="{StaticResource addressRow}">
                 <!--<ComboBox Height="20" Width="100" SelectionChanged="ComboBox_SelectionChanged" VerticalContentAlignment="Center" HorizontalAlignment="Left" VerticalAlignment="Center" Padding="3">-->
-                <ComboBox>
+                <ComboBox x:Name="drivesList1" SelectionChanged="ComboBox_SelectionChanged">
                 </ComboBox>
-                <TextBlock Style="{StaticResource pathInfo}">Path:</TextBlock>
+                <TextBlock Style="{StaticResource pathInfo}" x:Name="path1"></TextBlock>
             </StackPanel>
             <!--<ListView SizeChanged="ListView_SizeChanged">-->
-            <ListView>
+            <ListView x:Name="listEntryView1">
                 <ListView.View>
                     <GridView>
+
+                        <GridViewColumn Header="Name" Width="Auto">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,5,0"/>
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        
+                        <!--<GridViewColumn Header="Name" Width="200" DisplayMemberBinding="{Binding Name}" />-->
+                        <GridViewColumn Header="Date Modified" Width="100" DisplayMemberBinding="{Binding Date}"/>
+                        <GridViewColumn Header="Type" Width="100" DisplayMemberBinding="{Binding Type}" />
+                        <GridViewColumn Header="Size" Width="100" DisplayMemberBinding="{Binding Size}" />
+                    </GridView>
+                </ListView.View>
+                <ListView.Resources>
+                    <Style TargetType="{x:Type ListViewItem}">
+                        <EventSetter Event="MouseDoubleClick" Handler="ProductsListView_MouseDoubleClick"/>
+                    </Style>
+                </ListView.Resources>
+            </ListView>
+        </DockPanel>
+
+
+
+
+        <DockPanel x:Name="dockPanel2" Grid.Column="3" Grid.Row="2" LastChildFill="True" GotFocus="DockPanel_GotFocus" LostFocus="DockPanel_LostFocus">
+            <StackPanel Style="{StaticResource addressRow}">
+                <ComboBox x:Name="drivesList2" SelectionChanged="ComboBox_SelectionChanged">
+                </ComboBox>
+                <TextBlock Style="{StaticResource pathInfo}" x:Name="path2"></TextBlock>
+            </StackPanel>
+            <ListView x:Name="listEntryView2" SizeChanged="ListView_SizeChanged">
+                <ListView.View>
+                    <GridView>
+
+                        <GridViewColumn Header="Name" Width="Auto">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,5,0"/>
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
                         <GridViewColumn Header="Name" Width="200" DisplayMemberBinding="{Binding Name}" />
                         <GridViewColumn Header="Date Modified" Width="100" DisplayMemberBinding="{Binding Date}"/>
                         <GridViewColumn Header="Type" Width="100" DisplayMemberBinding="{Binding Type}" />
@@ -125,42 +174,18 @@
                 </ListView.View>
                 <ListView.Resources>
                     <Style TargetType="{x:Type ListViewItem}">
-                        <!--<EventSetter Event="MouseDoubleClick"/>-->
+                        <EventSetter Event="MouseDoubleClick" Handler="ProductsListView_MouseDoubleClick"/>
                     </Style>
                 </ListView.Resources>
             </ListView>
         </DockPanel>
 
-        <DockPanel Grid.Column="2" Grid.Row="2" LastChildFill="True">
-            <StackPanel Style="{StaticResource addressRow}">
-                <!--<ComboBox Height="20" Width="100" SelectionChanged="ComboBox_SelectionChanged" VerticalContentAlignment="Center" HorizontalAlignment="Left" VerticalAlignment="Center" Padding="3">-->
-                <ComboBox>
-                </ComboBox>
-                <TextBlock Style="{StaticResource pathInfo}">Path:</TextBlock>
-            </StackPanel>
-            <!--<ListView SizeChanged="ListView_SizeChanged" >-->
-            <ListView>
-                <ListView.View>
-                <GridView>
-                    <GridViewColumn Header="Name" Width="200" DisplayMemberBinding="{Binding Name}" />
-                    <GridViewColumn Header= "Date Modified" Width="100" DisplayMemberBinding="{Binding Date}"/>
-                    <GridViewColumn Header="Type" Width="100" DisplayMemberBinding="{Binding Type}" />
-                    <GridViewColumn Header="Size" Width="100" DisplayMemberBinding="{Binding Size}" />
-                </GridView>
-            </ListView.View>
-            <ListView.Resources>
-                <Style TargetType="{x:Type ListViewItem}">
-                    <!--<EventSetter Event="MouseDoubleClick" Handler="productsListView_MouseDoub1eC1ick"/>-->
-                </Style>
-            </ListView.Resources>
-        </ListView>
-        </DockPanel>
+
+
 
 
         <Rectangle Grid.Row="0" Grid.ColumnSpan="3" Height="1" Fill="LightGray" VerticalAlignment="Bottom"/>
-        <Rectangle Grid.Row="1" Grid.ColumnSpan="3" Height="1" Fill="LightGray" VerticalAlignment="Bottom"/>
-
-
+        <Rectangle Grid.Row="1" Grid.ColumnSpan="3" Height="1" Fill="Gray" VerticalAlignment="Bottom"/>
 
     </Grid>
 </Window>

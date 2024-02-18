@@ -24,3 +24,4 @@ D:\HK2Nam3\Windows\Assignment\Ass01_TotalCommander\Ass01_21127661\Ass01_21127661
 D:\HK2Nam3\Windows\Assignment\Ass01_TotalCommander\Ass01_21127661\Ass01_21127661\bin\Debug\net8.0-windows\runtimes\win\lib\net8.0\Microsoft.Win32.SystemEvents.dll
 D:\HK2Nam3\Windows\Assignment\Ass01_TotalCommander\Ass01_21127661\Ass01_21127661\obj\Debug\net8.0-windows\Ass01_21127661.csproj.AssemblyReference.cache
 D:\HK2Nam3\Windows\Assignment\Ass01_TotalCommander\Ass01_21127661\Ass01_21127661\obj\Debug\net8.0-windows\Ass01_21127661.csproj.CopyComplete
+D:\HK2Nam3\Windows\Assignment\Ass01_TotalCommander\Ass01_21127661\Ass01_21127661\obj\Debug\net8.0-windows\Ass01_21127661.sourcelink.json
