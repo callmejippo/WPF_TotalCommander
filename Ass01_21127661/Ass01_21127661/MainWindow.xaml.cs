@@ -14,6 +14,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 using static Ass01_21127661.MainWindow;
 
 namespace Ass01_21127661
@@ -43,9 +44,13 @@ namespace Ass01_21127661
         public string Type { get; set; }
         public string Size { get; set; }
 
+        private bool IsDirectory => Directory.Exists(Path);
+        private TextBlock statusMessage;
 
-        public FileItem(string name, ImageSource icon, string type, DateTime date, string size)
+
+        public FileItem(string path, string name, ImageSource icon, string type, DateTime date, string size)
         {
+            this.Path = path;
             this.Name = name;
             this.Icon = icon;
             this.Type = type;
@@ -54,7 +59,7 @@ namespace Ass01_21127661
         }
 
         public FileItem(string path, ImageSource icon, string name, DateTime date, string type, string size)
-            : this(name, icon, type, date, size)
+            : this(path,name, icon, type, date, size)
         {
             this.Path = path;
         }
@@ -97,12 +102,195 @@ namespace Ass01_21127661
             }
         }
 
+        public void CopyTo(string destinationPath)
+        {
+            try
+            {
+                if (File.Exists(Path))
+                {
+                    // Copy file
+                    string newFilePath = GenerateNewPath(destinationPath, Name);
+                    File.Copy(Path, newFilePath, true);
+
+                }
+                else if (Directory.Exists(Path))
+                {
+                    // Copy folder
+                    string newFolderPath = GenerateNewPath(destinationPath, Name);
+                    CopyFolder(Path, newFolderPath);
+                }
+                // Handle other cases if needed
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error copying item: {ex.Message}");
+                // Handle the exception according to your application's requirements
+            }
+        }
 
 
+        private void CopyFolder(string sourceFolder, string destinationFolder)
+        {
+            if (!Directory.Exists(destinationFolder))
+            {
+                Directory.CreateDirectory(destinationFolder);
+            }
+
+            string[] files = Directory.GetFiles(sourceFolder);
+            foreach (string file in files)
+            {
+                string name = System.IO.Path.GetFileName(file);
+                string dest = System.IO.Path.Combine(destinationFolder, name);
+                File.Copy(file, dest, true);
+            }
+
+            string[] folders = Directory.GetDirectories(sourceFolder);
+            foreach (string folder in folders)
+            {
+                string name = System.IO.Path.GetFileName(folder);
+                string dest = System.IO.Path.Combine(destinationFolder, name);
+                CopyFolder(folder, dest);
+            }
+        }
+
+        public void MoveTo(string destinationPath)
+        {
+            try
+            {
+               
+                string parentPath = System.IO.Path.GetDirectoryName(Path);
+                if (parentPath == destinationPath)
+                {
+                    // Show a user-friendly message that the paths are the same
+                    MessageBoxResult result = MessageBox.Show("Source and destination paths are the same. Do you want to replace the existing item or create a copy?", "Move Operation", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+
+                    switch (result)
+                    {
+                        case MessageBoxResult.Yes:
+                            // Replace the existing item
+                            if (File.Exists(Path))
+                            {
+                                File.Replace(Path, destinationPath, null);
+                            }
+                            else if (Directory.Exists(Path))
+                            {
+                                // Handle the case when the source and destination paths are the same for a directory
+                                MessageBox.Show("Source and destination paths are the same for a directory. No action taken.", "Move Operation", MessageBoxButton.OK, MessageBoxImage.Information);
+                            }
+                            break;
+
+                        case MessageBoxResult.No:
+                            // Create a copy
+                            if (File.Exists(Path))
+                            {
+                                string newFilePath = GenerateNewPath(destinationPath, Name);
+                                File.Copy(Path, newFilePath);
+                            }
+                            else if (Directory.Exists(Path))
+                            {
+                                string newFolderPath = GenerateNewPath(destinationPath, Name);
+                                CopyFolder(Path, newFolderPath);
+                            }
+                            break;
+
+                        case MessageBoxResult.Cancel:
+                            // User canceled the operation
+                            return;
+                    }
+                }
+                else
+                {
+                    if (File.Exists(Path))
+                    {
+                        // Move file
+                        string newFilePath = GenerateNewPath(destinationPath, Name);
+                        File.Move(Path, newFilePath);
+                    }
+                    else if (Directory.Exists(Path))
+                    {
+                        // Move folder
+                        string newFolderPath = GenerateNewPath(destinationPath, Name);
+                        Directory.Move(Path, newFolderPath);
+                    }
+                }
+                // Handle other cases if needed
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error moving item: {ex.Message}");
+                // Handle the exception according to your application's requirements
+            }
+        }
+
+        private string GenerateNewPath(string destinationPath, string itemName)
+        {
+            string newPath = System.IO.Path.Combine(destinationPath, itemName);
+
+            // Check if the destination already contains an item with the same name
+            int counter = 1;
+            while (File.Exists(newPath) || Directory.Exists(newPath))
+            {
+                string newName = $"{System.IO.Path.GetFileNameWithoutExtension(itemName)}_{counter}{System.IO.Path.GetExtension(itemName)}";
+                newPath = System.IO.Path.Combine(destinationPath, newName);
+                counter++;
+            }
+
+            return newPath;
+        }
+
+        public bool Delete()
+        {
+            try
+            {
+                string itemType = IsDirectory ? "folder" : "file";
+                MessageBoxResult result = MessageBox.Show($"Are you sure you want to delete this {itemType}?\n\nPath: {Path}",
+                                                           "Delete Confirmation",
+                                                           MessageBoxButton.YesNo,
+                                                           MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    if (IsDirectory)
+                    {
+                        // Delete folder
+                        Directory.Delete(Path, true); // Set to true for recursive deletion
+                    }
+                    else
+                    {
+                        // Delete file
+                        File.Delete(Path);
+                    }
+                    //ShowStatusMessage("Deletion successful!", TimeSpan.FromSeconds(5));
+                }
+                // No need to handle "No" case as the deletion is canceled
+                 return true;
+            }
+            catch (Exception ex)
+            {
+                ShowErrorMessage($"Error deleting item: {ex.Message}");
+                return false;
+            }
+        }
+
+
+
+        private void ShowSuccessMessage(string message)
+        {
+            MessageBox.Show(message, "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void ShowErrorMessage(string message)
+        {
+            MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+        
 
 
 
     }
+
+
 
     public class DriveList
     {
@@ -160,6 +348,7 @@ namespace Ass01_21127661
 
         public void ReadDrive(string directoryPath)
         {
+            Debug.WriteLine("READ DRIVE CALLED");
             try
             {
                 // Clear previous items
@@ -215,7 +404,8 @@ namespace Ass01_21127661
 
         public void GenerateListView()
         {
-            var fileSystemItems = itemList.Select(item => new FileItem(item.Name, item.Icon, item.Type, item.Date, item.Size)
+            Debug.WriteLine("GenerateListView called");
+            var fileSystemItems = itemList.Select(item => new FileItem(item.Path,item.Name, item.Icon, item.Type, item.Date, item.Size)
             {
             }).ToList();
 
@@ -310,7 +500,6 @@ namespace Ass01_21127661
 
             string newPath = System.IO.Path.Combine(driveList.pathTextBlock.Text.Trim(), value.Name);
 
-            Debug.WriteLine("path:", newPath);
             if (value.Type == "Folder")
             {
 
@@ -339,6 +528,63 @@ namespace Ass01_21127661
 
 
         }
+
+        public void listEntryView_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            var listView = sender as ListView;
+            var listViewItem = GetListViewItem(e.OriginalSource as DependencyObject);
+
+            if (listViewItem == null)
+            {
+                return;
+            }
+
+            var fileItem = listViewItem.DataContext as FileItem;
+
+            if (fileItem != null)
+            {
+                // Access fileItem properties here
+                Debug.WriteLine($"Single click on item: {fileItem.Name}, Path: {fileItem.Path}");
+            }
+        }
+
+        private ListViewItem GetListViewItem(DependencyObject obj)
+        {
+            while (obj != null && obj.GetType() != typeof(ListViewItem))
+            {
+                obj = VisualTreeHelper.GetParent(obj);
+            }
+
+            return obj as ListViewItem;
+        }
+
+
+        public void PerformOperationAndRefreshUI(FileItem selectedFile, string destinationPath, Action<string, string> operation)
+        {
+            try
+            {
+                if (selectedFile != null)
+                {
+                    // Perform the operation (e.g., copy or delete)
+                    operation(selectedFile.Path, System.IO.Path.Combine(destinationPath, selectedFile.Name));
+                    Debug.WriteLine($"File operation completed: {operation}");
+
+                    // Update the UI
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        // Refresh the data source
+                        ReadDrive(destinationPath);
+                    });
+                }
+                // Handle other cases if needed
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error performing operation: {ex.Message}");
+                // Handle the exception according to your application's requirements
+            }
+        }
+
     }
 
     public class History
@@ -371,20 +617,34 @@ namespace Ass01_21127661
         public void addPath(string newPath) {
 
             // Remove paths after the current index
-            if (pathArr.Count == 0 || curIndex == pathArr.Count - 1)
+            if (curIndex == 9)
             {
-                // If the list is empty or the current index is at the end, add the new path
+                pathArr.RemoveAt(0);
                 pathArr.Add(newPath);
-                curIndex = pathArr.Count - 1;
             }
             else
             {
-                // If the current index is not at the end, replace the current path and remove subsequent paths
-                pathArr[curIndex + 1] = newPath;
-                pathArr.RemoveRange(curIndex + 2, pathArr.Count - curIndex - 2);
-                curIndex = pathArr.Count - 1;
+                if (pathArr.Count == 0 || curIndex == pathArr.Count - 1)
+                {
+                    // If the list is empty or the current index is at the end, add the new path
+                    pathArr.Add(newPath);
+                    curIndex = pathArr.Count - 1;
+                }
+                else
+                {
+                    // If the current index is not at the end, replace the current path and remove subsequent paths
+                    pathArr[curIndex + 1] = newPath;
+                    pathArr.RemoveRange(curIndex + 2, pathArr.Count - curIndex - 2);
+                    curIndex = pathArr.Count - 1;
+                }
+            } 
+            Debug.WriteLine(pathArr.Count);
+            foreach (var path in pathArr)
+            {
+                Debug.WriteLine(path);
             }
-            
+            Debug.WriteLine("CUR", curIndex.ToString());
+
 
         }
         public void removePath(string path) {
@@ -490,6 +750,8 @@ namespace Ass01_21127661
             }
 
         }
+
+
         private void ListView_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             ListView listView = sender as ListView;
@@ -533,6 +795,7 @@ namespace Ass01_21127661
 
             if (dockPanel != null)
             {
+
                 if (dockPanel == dockPanel1)
                 {
                     // dockPanel1 lost focus
@@ -545,6 +808,24 @@ namespace Ass01_21127661
                 }
             }
         }
+
+
+        private void listEntryView_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (isDockPanel1Focused) {
+                Debug.WriteLine("dockPanel1 has a single click");
+
+                fileExplorer1.listEntryView_PreviewMouseLeftButtonDown(sender, e);
+            }
+            else if (isDockPanel2Focused) 
+            {
+                Debug.WriteLine("dockPanel2 has a single click");
+
+                fileExplorer2.listEntryView_PreviewMouseLeftButtonDown(sender, e);
+
+            }
+        }
+
 
 
         public void BackButton_Click(object sender, RoutedEventArgs e)
@@ -660,6 +941,182 @@ namespace Ass01_21127661
             }
         }
 
+        private void CopyButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Check if an item is selected in the ListView
+            Debug.WriteLine("COPY");
+            FileItem selectedFile = null;
+            string destinationPath = null;
+            if (isDockPanel1Focused)
+            {
+                selectedFile = listEntryView1.SelectedItem as FileItem;
+                destinationPath = fileExplorer2.driveList.pathTextBlock.Text;
+                if(selectedFile != null && destinationPath != null) {
+                    selectedFile.CopyTo(destinationPath);
+                    if (fileExplorer1.driveList.pathTextBlock.Text == fileExplorer1.driveList.pathTextBlock.Text)
+                    {
+                        RefreshUI(fileExplorer1, fileExplorer1.driveList.pathTextBlock.Text);
+                        RefreshUI(fileExplorer2, fileExplorer2.driveList.pathTextBlock.Text);
+
+
+                    }
+                    else
+                    {
+
+                        RefreshUI(fileExplorer2, destinationPath);
+                    }    
+                    //fileExplorer1.PerformOperationAndRefreshUI(selectedFile, destinationPath, (source, destination) => File.Copy(source, destination, true));
+
+                }
+
+            }
+            else if(isDockPanel2Focused)
+            {
+                selectedFile = listEntryView2.SelectedItem as FileItem;
+                destinationPath = fileExplorer1.driveList.pathTextBlock.Text;
+                if (selectedFile != null && destinationPath != null)
+                {
+                    selectedFile.CopyTo(destinationPath);
+                    if (fileExplorer1.driveList.pathTextBlock.Text == fileExplorer1.driveList.pathTextBlock.Text)
+                    {
+                        RefreshUI(fileExplorer1, fileExplorer1.driveList.pathTextBlock.Text);
+                        RefreshUI(fileExplorer2, fileExplorer2.driveList.pathTextBlock.Text);
+
+
+                    }
+                    else
+                    {
+                        RefreshUI(fileExplorer1, destinationPath);
+
+                    }    
+                    //fileExplorer1.PerformOperationAndRefreshUI(selectedFile, destinationPath, (source, destination) => File.Copy(source, destination, true));
+                }
+
+            }
+            else
+            {
+                // Handle the case where no item is selected
+                MessageBox.Show("Please select an item to copy.", "No Item Selected", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+        private void MoveButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Check if an item is selected in the ListView
+            Debug.WriteLine("MOVE");
+            FileItem selectedFile = null;
+            string destinationPath = null;
+            if (isDockPanel1Focused)
+            {
+                selectedFile = listEntryView1.SelectedItem as FileItem;
+                destinationPath = fileExplorer2.driveList.pathTextBlock.Text;
+                if (selectedFile != null && destinationPath != null)
+                {
+                    selectedFile.MoveTo(destinationPath);
+                    RefreshUI(fileExplorer2, destinationPath);
+                    RefreshUI(fileExplorer1, fileExplorer1.driveList.pathTextBlock.Text);
+                }
+            }
+            else if (isDockPanel2Focused)
+            {
+                selectedFile = listEntryView2.SelectedItem as FileItem;
+                destinationPath = fileExplorer1.driveList.pathTextBlock.Text;
+                if (selectedFile != null && destinationPath != null)
+                {
+                    selectedFile.MoveTo(destinationPath);
+                    RefreshUI(fileExplorer1, destinationPath);
+                    RefreshUI(fileExplorer2, fileExplorer2.driveList.pathTextBlock.Text);
+
+                }
+            }
+            else
+            {
+                // Handle the case where no item is selected
+                MessageBox.Show("Please select an item to move.", "No Item Selected", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void DeleteButton_Click(object sender, RoutedEventArgs e)
+        {
+            FileItem selectedFile = null;
+
+            if (isDockPanel1Focused)
+            {
+                selectedFile = listEntryView1.SelectedItem as FileItem;
+            }
+            else if (isDockPanel2Focused)
+            {
+                selectedFile = listEntryView2.SelectedItem as FileItem;
+            }
+
+            if (selectedFile != null)
+            {
+                bool isDelete = selectedFile.Delete();
+                if (isDelete)
+                {
+
+                    if (fileExplorer1.driveList.pathTextBlock.Text == fileExplorer1.driveList.pathTextBlock.Text)
+                    {
+                        RefreshUI(fileExplorer1, fileExplorer1.driveList.pathTextBlock.Text);
+                        RefreshUI(fileExplorer2, fileExplorer2.driveList.pathTextBlock.Text);
+
+
+                    }
+                    else
+                    {
+                        if (isDockPanel1Focused)
+                        {
+                            RefreshUI(fileExplorer1, fileExplorer1.driveList.pathTextBlock.Text);
+
+                        }
+                        else if (isDockPanel2Focused)
+                        {
+                            RefreshUI(fileExplorer2, fileExplorer2.driveList.pathTextBlock.Text);
+
+                        }
+                    }
+                    ShowStatusMessage("Delete SuccessFully!", TimeSpan.FromSeconds(5));
+
+                }
+
+
+                // Make sure to refresh the UI after deletion
+            }
+            else
+            {
+                // Handle the case where no item is selected
+                MessageBox.Show("Please select an item to delete.", "No Item Selected", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+
+        private void RefreshUI(FileExplorer fileExplorer, string destinationPath)
+        {
+            Debug.WriteLine("REFresh");
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                // Refresh the data source
+                fileExplorer.ReadDrive(destinationPath);
+            });
+        }
+
+        private void ShowStatusMessage(string message, TimeSpan duration)
+        {
+            statusMessage.Text = message;
+            statusPopup.IsOpen = true;
+
+            var timer = new DispatcherTimer { Interval = duration };
+            timer.Tick += (sender, args) =>
+            {
+                statusPopup.IsOpen = false;
+                timer.Stop();
+            };
+
+            timer.Start();
+        }
+
+
     }
+    
+
 
 }

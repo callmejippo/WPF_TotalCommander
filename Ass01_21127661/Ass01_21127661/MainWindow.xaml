@@ -82,19 +82,19 @@
                 </StackPanel>
             </Button>
             <Border Width="2" Height="30" VerticalAlignment="Center" Background="LightGray"/>
-            <Button >
+            <Button Click="CopyButton_Click" x:Name="copyBtn">
                 <StackPanel Orientation="Vertical" VerticalAlignment="Center">
                     <Image Source="images/data-transfer.png" Style="{StaticResource btnIcon}"/>
                     <TextBlock Style="{StaticResource btnContent}">Copy</TextBlock>
                 </StackPanel>
             </Button>
-            <Button >
+            <Button Click="MoveButton_Click">
                 <StackPanel Orientation="Vertical" VerticalAlignment="Center">
                     <Image Source="images/file.png" Style="{StaticResource btnIcon}"/>
                     <TextBlock Style="{StaticResource btnContent}">Move</TextBlock>
                 </StackPanel>
             </Button>
-            <Button >
+            <Button Click="DeleteButton_Click">
                 <StackPanel Orientation="Vertical" VerticalAlignment="Center">
                     <Image Source="images/delete.png" Style="{StaticResource btnIcon}"/>
                     <TextBlock Style="{StaticResource btnContent}">Delete</TextBlock>
@@ -113,7 +113,7 @@
                 <TextBlock Style="{StaticResource pathInfo}" x:Name="path1"></TextBlock>
             </StackPanel>
             <!--<ListView SizeChanged="ListView_SizeChanged">-->
-            <ListView x:Name="listEntryView1">
+            <ListView x:Name="listEntryView1" SizeChanged="ListView_SizeChanged" PreviewMouseLeftButtonDown="listEntryView_PreviewMouseLeftButtonDown">
                 <ListView.View>
                     <GridView>
 
@@ -137,6 +137,7 @@
                 <ListView.Resources>
                     <Style TargetType="{x:Type ListViewItem}">
                         <EventSetter Event="MouseDoubleClick" Handler="ProductsListView_MouseDoubleClick"/>
+                        
                     </Style>
                 </ListView.Resources>
             </ListView>
@@ -151,7 +152,7 @@
                 </ComboBox>
                 <TextBlock Style="{StaticResource pathInfo}" x:Name="path2"></TextBlock>
             </StackPanel>
-            <ListView x:Name="listEntryView2" SizeChanged="ListView_SizeChanged">
+            <ListView x:Name="listEntryView2" SizeChanged="ListView_SizeChanged"  PreviewMouseLeftButtonDown="listEntryView_PreviewMouseLeftButtonDown">
                 <ListView.View>
                     <GridView>
 
@@ -166,7 +167,6 @@
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
 
-                        <GridViewColumn Header="Name" Width="200" DisplayMemberBinding="{Binding Name}" />
                         <GridViewColumn Header="Date Modified" Width="100" DisplayMemberBinding="{Binding Date}"/>
                         <GridViewColumn Header="Type" Width="100" DisplayMemberBinding="{Binding Type}" />
                         <GridViewColumn Header="Size" Width="100" DisplayMemberBinding="{Binding Size}" />
@@ -187,5 +187,10 @@
         <Rectangle Grid.Row="0" Grid.ColumnSpan="3" Height="1" Fill="LightGray" VerticalAlignment="Bottom"/>
         <Rectangle Grid.Row="1" Grid.ColumnSpan="3" Height="1" Fill="Gray" VerticalAlignment="Bottom"/>
 
+        <Popup x:Name="statusPopup" PlacementTarget="{Binding ElementName=yourMainWindow}" Placement="Center">
+            <Border Background="LightGreen" Padding="10">
+                <TextBlock x:Name="statusMessage" Text="" />
+            </Border>
+        </Popup>
     </Grid>
 </Window>
