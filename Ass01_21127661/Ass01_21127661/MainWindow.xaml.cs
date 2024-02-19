@@ -24,28 +24,17 @@ namespace Ass01_21127661
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     /// 
-    //public partial class MainWindow : Window
-    //{
-    //    public MainWindow()
-    //    {
-    //        InitializeComponent();
-    //    }
-    //}
-
-
 
     public class FileItem
     {
-
         public string Path { get; set; }
         public ImageSource Icon { get; set; }
         public string Name { get; set; }
         public DateTime Date { get; set; }
         public string Type { get; set; }
         public string Size { get; set; }
-
+        public string FormattedSize { get; set; }
         private bool IsDirectory => Directory.Exists(Path);
-        private TextBlock statusMessage;
 
 
         public FileItem(string path, string name, ImageSource icon, string type, DateTime date, string size)
@@ -56,13 +45,48 @@ namespace Ass01_21127661
             this.Type = type;
             this.Date = date;
             this.Size = size;
+            this.FormattedSize = string.IsNullOrEmpty(size) ? "" : GetBytesReadable(long.Parse(size));
         }
+
 
         public FileItem(string path, ImageSource icon, string name, DateTime date, string type, string size)
             : this(path,name, icon, type, date, size)
         {
             this.Path = path;
         }
+
+        public string GetBytesReadable(long i)
+        {
+            // Get absolute value
+            long absolute_i = (i < 0 ? -i : i);
+            // Determine the suffix and readable value
+            string suffix;
+            double readable;
+            if (absolute_i >= 0x40000000) // Gigabyte
+            {
+                suffix = " GB";
+                readable = (i >> 20);
+            }
+            else if (absolute_i >= 0x100000) // Megabyte
+            {
+                suffix = " MB";
+                readable = (i >> 10);
+            }
+            else if (absolute_i >= 0x400) // Kilobyte
+            {
+                suffix = " KB";
+                readable = i;
+            }
+            else
+            {
+                return i.ToString("0 B"); // Byte
+            }
+            // Divide by 1024 to get fractional value
+            readable = readable / 1024;
+            // Return formatted number with suffix
+            return readable.ToString("0.##") + suffix;
+        }
+
 
         public ImageSource GetFileIcon(string filePath)
         {
@@ -123,12 +147,11 @@ namespace Ass01_21127661
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error copying item: {ex.Message}");
+                ShowErrorMessage($"An error occured: {ex.Message}");
+
                 // Handle the exception according to your application's requirements
             }
         }
-
-
         private void CopyFolder(string sourceFolder, string destinationFolder)
         {
             if (!Directory.Exists(destinationFolder))
@@ -161,8 +184,7 @@ namespace Ass01_21127661
                 string parentPath = System.IO.Path.GetDirectoryName(Path);
                 if (parentPath == destinationPath)
                 {
-                    // Show a user-friendly message that the paths are the same
-                    MessageBoxResult result = MessageBox.Show("Source and destination paths are the same. Do you want to replace the existing item or create a copy?", "Move Operation", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+                    MessageBoxResult result = MessageBox.Show("Source and destination paths are the same. Do you want to replace the existing item? Yes if replace, No if create a copy.", "Move Operation", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
 
                     switch (result)
                     {
@@ -208,16 +230,17 @@ namespace Ass01_21127661
                     }
                     else if (Directory.Exists(Path))
                     {
+                        Debug.WriteLine("ELSE");
                         // Move folder
                         string newFolderPath = GenerateNewPath(destinationPath, Name);
                         Directory.Move(Path, newFolderPath);
                     }
                 }
-                // Handle other cases if needed
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error moving item: {ex.Message}");
+                ShowErrorMessage($"An error occured: {ex.Message}");
+
                 // Handle the exception according to your application's requirements
             }
         }
@@ -260,9 +283,7 @@ namespace Ass01_21127661
                         // Delete file
                         File.Delete(Path);
                     }
-                    //ShowStatusMessage("Deletion successful!", TimeSpan.FromSeconds(5));
                 }
-                // No need to handle "No" case as the deletion is canceled
                  return true;
             }
             catch (Exception ex)
@@ -271,32 +292,18 @@ namespace Ass01_21127661
                 return false;
             }
         }
-
-
-
-        private void ShowSuccessMessage(string message)
-        {
-            MessageBox.Show(message, "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
         private void ShowErrorMessage(string message)
         {
             MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
 
-        
-
-
 
     }
-
-
 
     public class DriveList
     {
         public ComboBox comboBox;
         public TextBlock pathTextBlock;
-
 
         public DriveList(ComboBox comboBox, TextBlock pathTextBlock)
         {
@@ -316,15 +323,12 @@ namespace Ass01_21127661
         }
 
 
-
-
     }
 
     public class FileExplorer
     {
         public DriveList driveList { get; set; }
         public List<FileItem> itemList { get; set;}
-        public FileItem selectingItem { get; set; }
         public List<FileSystemInfo> curItems { get; set; }
         public ListView entryView { get; set; }
         public History history { get; set; }
@@ -339,11 +343,6 @@ namespace Ass01_21127661
             this.entryView = entryView;
             this.history = history;
 
-            //// Attach ComboBox SelectionChanged event in the constructor
-            //driveList.comboBox.SelectionChanged += ComboBox_SelectionChanged;
-
-            //// Subscribe to the MouseDoubleClick event
-            //entryView.MouseDoubleClick += ProductsListView_MouseDoubleClick;
         }
 
         public void ReadDrive(string directoryPath)
@@ -358,9 +357,9 @@ namespace Ass01_21127661
                 // Check if the directory exists
                 if (Directory.Exists(directoryPath))
                 {
-                    // Read and print files in the current directory
+                    
                     DirectoryInfo curDir = new DirectoryInfo(directoryPath);
-                    //Debug.WriteLine("kaka: " + curDir.FullName);
+                    
 
                     string[] entries = Directory.GetFileSystemEntries(directoryPath).Where(entry => IsValidEntry(entry)).ToArray();
 
@@ -385,7 +384,7 @@ namespace Ass01_21127661
                         fileItem.Icon = fileItem.GetFileIcon(item.FullName);
 
                         itemList.Add(fileItem);
-                        //Debug.WriteLine("Itemlist hear: ", fileItem.Name);
+                        
                     }
                     GenerateListView();
 
@@ -402,12 +401,19 @@ namespace Ass01_21127661
             }
         }
 
+        
+
         public void GenerateListView()
         {
             Debug.WriteLine("GenerateListView called");
-            var fileSystemItems = itemList.Select(item => new FileItem(item.Path,item.Name, item.Icon, item.Type, item.Date, item.Size)
+            var fileSystemItems = itemList.Select(item => new FileItem(item.Path, item.Name, item.Icon, item.Type, item.Date, item.Size)
             {
             }).ToList();
+            //var fileSystemItems = itemList.Select(item =>
+            //{
+            //    var fileItem = new FileItem(item.Path, item.Name, item.Icon, item.Type, item.Date, item.Size);
+            //    return fileItem;
+            //}).ToList();
 
             // Assuming entryView is a WPF ListView
             entryView.ItemsSource = fileSystemItems;
@@ -470,15 +476,11 @@ namespace Ass01_21127661
 
             // Reset the flag after a short delay to allow subsequent events to be processed
             Task.Delay(100).ContinueWith(_ => comboBoxSelectionHandled = false);
-
-
         }
 
         public void ProductsListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             var control = sender as ListViewItem;
-
-
             // Check if control is null
             if (control == null)
             {
@@ -486,7 +488,6 @@ namespace Ass01_21127661
                 // Handle the case where control is null (log an error, show a message, etc.)
                 return;
             }
-            //Debug.WriteLine("Value Path:", control.Content);
 
             var value = control.DataContext as FileItem;
             // Check if value is null
@@ -526,7 +527,6 @@ namespace Ass01_21127661
 
             }
 
-
         }
 
         public void listEntryView_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -554,36 +554,9 @@ namespace Ass01_21127661
             {
                 obj = VisualTreeHelper.GetParent(obj);
             }
-
             return obj as ListViewItem;
         }
 
-
-        public void PerformOperationAndRefreshUI(FileItem selectedFile, string destinationPath, Action<string, string> operation)
-        {
-            try
-            {
-                if (selectedFile != null)
-                {
-                    // Perform the operation (e.g., copy or delete)
-                    operation(selectedFile.Path, System.IO.Path.Combine(destinationPath, selectedFile.Name));
-                    Debug.WriteLine($"File operation completed: {operation}");
-
-                    // Update the UI
-                    Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        // Refresh the data source
-                        ReadDrive(destinationPath);
-                    });
-                }
-                // Handle other cases if needed
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error performing operation: {ex.Message}");
-                // Handle the exception according to your application's requirements
-            }
-        }
 
     }
 
@@ -616,7 +589,7 @@ namespace Ass01_21127661
         }
         public void addPath(string newPath) {
 
-            // Remove paths after the current index
+            // when history reach the capacity = 10, if user continue access to another path just pop element from start and push elemtent from the end 
             if (curIndex == 9)
             {
                 pathArr.RemoveAt(0);
@@ -678,7 +651,6 @@ namespace Ass01_21127661
             fileExplorer2 = InitializeFileExplorer(drivesList2, path2, listEntryView2, history2);
 
 
-        //loadDriver();
         }
         private FileExplorer InitializeFileExplorer(ComboBox driveComboBox, TextBlock pathTextBlock, ListView entryView, History history)
         {
@@ -826,8 +798,6 @@ namespace Ass01_21127661
             }
         }
 
-
-
         public void BackButton_Click(object sender, RoutedEventArgs e)
         {
             if (isDockPanel1Focused)
@@ -951,21 +921,31 @@ namespace Ass01_21127661
             {
                 selectedFile = listEntryView1.SelectedItem as FileItem;
                 destinationPath = fileExplorer2.driveList.pathTextBlock.Text;
-                if(selectedFile != null && destinationPath != null) {
+                if(selectedFile != null && destinationPath != null && destinationPath != "") {
+                    Debug.WriteLine("check for path: ", destinationPath);
+
                     selectedFile.CopyTo(destinationPath);
                     if (fileExplorer1.driveList.pathTextBlock.Text == fileExplorer1.driveList.pathTextBlock.Text)
                     {
                         RefreshUI(fileExplorer1, fileExplorer1.driveList.pathTextBlock.Text);
                         RefreshUI(fileExplorer2, fileExplorer2.driveList.pathTextBlock.Text);
-
-
                     }
                     else
                     {
-
                         RefreshUI(fileExplorer2, destinationPath);
                     }    
-                    //fileExplorer1.PerformOperationAndRefreshUI(selectedFile, destinationPath, (source, destination) => File.Copy(source, destination, true));
+                }
+                else
+                {
+                    if (selectedFile == null)
+                        MessageBox.Show("Please select an item to copy.", "No Item Selected", MessageBoxButton.OK, MessageBoxImage.Information);
+                    else if (destinationPath == null || destinationPath == "")
+                    {
+                        Debug.WriteLine("check for path: ", destinationPath);
+
+                        MessageBox.Show("Please select a Destination Path to copy.", "No Destination Path Selected", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                        
 
                 }
 
@@ -974,7 +954,7 @@ namespace Ass01_21127661
             {
                 selectedFile = listEntryView2.SelectedItem as FileItem;
                 destinationPath = fileExplorer1.driveList.pathTextBlock.Text;
-                if (selectedFile != null && destinationPath != null)
+                if (selectedFile != null && destinationPath != null && destinationPath != "")
                 {
                     selectedFile.CopyTo(destinationPath);
                     if (fileExplorer1.driveList.pathTextBlock.Text == fileExplorer1.driveList.pathTextBlock.Text)
@@ -989,7 +969,14 @@ namespace Ass01_21127661
                         RefreshUI(fileExplorer1, destinationPath);
 
                     }    
-                    //fileExplorer1.PerformOperationAndRefreshUI(selectedFile, destinationPath, (source, destination) => File.Copy(source, destination, true));
+                }
+                else
+                {
+                    if (selectedFile == null)
+                        MessageBox.Show("Please select an item to copy.", "No Item Selected", MessageBoxButton.OK, MessageBoxImage.Information);
+                    else if (destinationPath == null || destinationPath == "")
+                        MessageBox.Show("Please select a Destination Path to copy.", "No Destination Path Selected", MessageBoxButton.OK, MessageBoxImage.Information);
+
                 }
 
             }
@@ -1009,22 +996,39 @@ namespace Ass01_21127661
             {
                 selectedFile = listEntryView1.SelectedItem as FileItem;
                 destinationPath = fileExplorer2.driveList.pathTextBlock.Text;
-                if (selectedFile != null && destinationPath != null)
+                if (selectedFile != null && destinationPath != null && destinationPath != "")
                 {
                     selectedFile.MoveTo(destinationPath);
                     RefreshUI(fileExplorer2, destinationPath);
                     RefreshUI(fileExplorer1, fileExplorer1.driveList.pathTextBlock.Text);
                 }
+                else
+                {
+                    if (selectedFile == null)
+                        MessageBox.Show("Please select an item to move.", "No Item Selected", MessageBoxButton.OK, MessageBoxImage.Information);
+                    else if (destinationPath == null || destinationPath == "")
+                        MessageBox.Show("Please select a Destination Path to move.", "No Destination Path Selected", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                }
             }
             else if (isDockPanel2Focused)
             {
+                Debug.WriteLine("hah", destinationPath);
                 selectedFile = listEntryView2.SelectedItem as FileItem;
                 destinationPath = fileExplorer1.driveList.pathTextBlock.Text;
-                if (selectedFile != null && destinationPath != null)
+                if (selectedFile != null && destinationPath != null && destinationPath != "")
                 {
                     selectedFile.MoveTo(destinationPath);
                     RefreshUI(fileExplorer1, destinationPath);
                     RefreshUI(fileExplorer2, fileExplorer2.driveList.pathTextBlock.Text);
+
+                }
+                else
+                {
+                    if (selectedFile == null)
+                        MessageBox.Show("Please select an item to move.", "No Item Selected", MessageBoxButton.OK, MessageBoxImage.Information);
+                    else if (destinationPath == null || destinationPath == "")
+                        MessageBox.Show("Please select a Destination Path to move.", "No Destination Path Selected", MessageBoxButton.OK, MessageBoxImage.Information);
 
                 }
             }
@@ -1088,7 +1092,6 @@ namespace Ass01_21127661
             }
         }
 
-
         private void RefreshUI(FileExplorer fileExplorer, string destinationPath)
         {
             Debug.WriteLine("REFresh");
@@ -1098,7 +1101,6 @@ namespace Ass01_21127661
                 fileExplorer.ReadDrive(destinationPath);
             });
         }
-
         private void ShowStatusMessage(string message, TimeSpan duration)
         {
             statusMessage.Text = message;
@@ -1117,6 +1119,5 @@ namespace Ass01_21127661
 
     }
     
-
 
 }

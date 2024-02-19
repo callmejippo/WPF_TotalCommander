@@ -131,7 +131,7 @@
                         <!--<GridViewColumn Header="Name" Width="200" DisplayMemberBinding="{Binding Name}" />-->
                         <GridViewColumn Header="Date Modified" Width="100" DisplayMemberBinding="{Binding Date}"/>
                         <GridViewColumn Header="Type" Width="100" DisplayMemberBinding="{Binding Type}" />
-                        <GridViewColumn Header="Size" Width="100" DisplayMemberBinding="{Binding Size}" />
+                        <GridViewColumn Header="Size" Width="100" DisplayMemberBinding="{Binding FormattedSize}" />
                     </GridView>
                 </ListView.View>
                 <ListView.Resources>
@@ -169,7 +169,7 @@
 
                         <GridViewColumn Header="Date Modified" Width="100" DisplayMemberBinding="{Binding Date}"/>
                         <GridViewColumn Header="Type" Width="100" DisplayMemberBinding="{Binding Type}" />
-                        <GridViewColumn Header="Size" Width="100" DisplayMemberBinding="{Binding Size}" />
+                        <GridViewColumn Header="Size" Width="100" DisplayMemberBinding="{Binding FormattedSize}" />
                     </GridView>
                 </ListView.View>
                 <ListView.Resources>
